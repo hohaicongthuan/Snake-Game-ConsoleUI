@@ -22,6 +22,10 @@ extern const int	KEY_LEFT[];
 extern const int	KEY_RIGHT[];
 extern const int	KEY_SELECT[];
 
+struct Coordinate {
+	int x, y;
+};
+
 // Functions define
 
 // Checks if a given x is in KEY_UP[]
@@ -38,3 +42,6 @@ int Random(int n);
 void Colour(int n);
 void GotoXY(int x, int y);
 void NoCursorType();
+int StartSnake();
+void BorderRender();
+void Init();
