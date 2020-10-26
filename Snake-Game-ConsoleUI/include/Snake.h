@@ -45,3 +45,4 @@ void NoCursorType();
 int StartSnake();
 void BorderRender();
 void Init();
+Coordinate SpawnFood();

@@ -26,8 +26,8 @@ const int	KEY_SELECT[] = { 13, 102 };
 // parts of the snake
 Coordinate SnakeCoord[BOX_SIZE_X * BOX_SIZE_Y];
 
-// Snake's head and tail coordinates
-Coordinate SnakeHead, SnakeTail;
+// Snake's head and tail and food coordinates
+Coordinate SnakeHead, SnakeTail, Food;
 
 // The box in which the snake lives
 int Box[BOX_SIZE_X][BOX_SIZE_Y];
@@ -125,6 +125,32 @@ void NoCursorType() // Hàm ẩn con trỏ console
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &Info);
 }
 
+// This function will randomly generate and retun
+// the position of the food
+Coordinate SpawnFood() {
+    Coordinate temp;
+    bool isValidCoord = true;
+    
+    // Spawn random coordinates for the food
+    // Food cannot be spawned on occupied slot
+    // of the snake
+    do {
+        temp.x = Random(19) + 1;
+        temp.y = Random(19) + 1;
+
+        // Check if the spawned position is occupied
+        for (int i = 0; i < SnakeSize; i++) {
+            if (SnakeCoord[i + 1].x == temp.x &&
+                SnakeCoord[i + 1].y == temp.y) {
+                isValidCoord = false;
+                break;
+            }
+        }
+    } while (!isValidCoord);
+
+    return temp;
+}
+
 // This function will print the border
 void BorderRender() {
     // First row
@@ -153,6 +179,24 @@ void BorderRender() {
 // This function will print the box and reset
 // console cursor to (0, 0)
 void BoxRender() {
+    // Reset matrix
+    for (int y = 0; y < BOX_SIZE_Y; y++) {
+        for (int x = 0; x < BOX_SIZE_X; x++) {
+            Box[x][y] = -1;
+        }
+    }
+    
+    // Set snake's position on the box
+    for (int i = 0; i < SnakeSize; i++) {
+        int CoordX = SnakeCoord[i + 1].x;
+        int CoordY = SnakeCoord[i + 1].y;
+        Box[CoordX][CoordY] = 1;
+    }
+
+    // Set food's position on the box
+    Box[Food.x][Food.y] = 0;
+    
+    // Print the matrix
     GotoXY(1, 1);
     for (int y = 0; y < BOX_SIZE_Y; y++) {
         for (int x = 0; x < BOX_SIZE_X; x++) {
@@ -170,33 +214,16 @@ void Init() {
     SnakeSize = 1;
     temp.x = BOX_SIZE_X / 2;
     temp.y = BOX_SIZE_Y / 2;
-    SnakeCoord[1] = temp;
+    SnakeCoord[SnakeSize] = temp;
     SnakeHead.x = BOX_SIZE_X / 2;
     SnakeHead.y = BOX_SIZE_Y / 2;
     SnakeTail = SnakeHead;
 
-    int x, y;
-
     // Hide console cursor
     NoCursorType();
 
-    // Reset matrix
-    for (y = 0; y < BOX_SIZE_Y; y++) {
-        for (x = 0; x < BOX_SIZE_X; x++) {
-            Box[x][y] = -1;
-        }
-    }
-
     // Spawn random coordinates for the food
-    do {
-        x = Random(19) + 1;
-        y = Random(19) + 1;
-        Box[x][y] = 0;
-    } while ((x == BOX_SIZE_X / 2) && (y == BOX_SIZE_Y / 2));
-
-    // Set default position for the snake
-    // which is at the centre of the box
-    Box[BOX_SIZE_X / 2][BOX_SIZE_Y / 2] = 1;
+    Food = SpawnFood();
 
     // Draw
     BorderRender();
