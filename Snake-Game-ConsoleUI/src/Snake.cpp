@@ -125,7 +125,7 @@ void NoCursorType() // Hàm ẩn con trỏ console
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &Info);
 }
 
-// This function will randomly generate and retun
+// This function will randomly generate and return
 // the position of the food
 Coordinate SpawnFood() {
     Coordinate temp;
@@ -211,13 +211,16 @@ void BoxRender() {
 
 void Init() {
     Coordinate temp;
-    SnakeSize = 1;
+    SnakeSize = 2;
     temp.x = BOX_SIZE_X / 2;
     temp.y = BOX_SIZE_Y / 2;
+    SnakeCoord[SnakeSize - 1] = temp;
+    temp.y = temp.y + 1;
     SnakeCoord[SnakeSize] = temp;
     SnakeHead.x = BOX_SIZE_X / 2;
     SnakeHead.y = BOX_SIZE_Y / 2;
-    SnakeTail = SnakeHead;
+    SnakeTail = SnakeCoord[SnakeSize];
+    SnakeHead = SnakeCoord[SnakeSize - 1];
 
     // Hide console cursor
     NoCursorType();
@@ -232,8 +235,92 @@ void Init() {
     GotoXY(0, 22);
 }
 
-int StartSnake() {
-    Init();
+// Checks if the snake can move up/down
+bool CanMoveUpDown() {
+    Coordinate HeadMinusOne = SnakeCoord[2];
+    if (SnakeHead.y == HeadMinusOne.y) return true;
+    else return false;
+}
 
-    return 0;
+// Checks if the snake can move left/right
+bool CanMoveLeftRight() {
+    Coordinate HeadMinusOne = SnakeCoord[2];
+    if (SnakeHead.x == HeadMinusOne.x) return true;
+    else return false;
+}
+
+// This function will move the snake in a direction
+void MoveSnake(char Direction) {
+    switch (Direction) {
+    case DIRECTION_UP:
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = 0; i < SnakeSize; i++) {
+            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        }
+        
+        // Set new head coordinates
+        SnakeCoord[1].y = SnakeCoord[1].y - 1;
+
+        // Set head and tail coordinates
+        SnakeHead = SnakeCoord[1];
+        SnakeTail = SnakeCoord[SnakeSize];
+
+        break;
+    case DIRECTION_DOWN:
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = 0; i < SnakeSize; i++) {
+            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        }
+
+        // Set new head coordinates
+        SnakeCoord[1].y = SnakeCoord[1].y + 1;
+
+        // Set head and tail coordinates
+        SnakeHead = SnakeCoord[1];
+        SnakeTail = SnakeCoord[SnakeSize];
+
+        break;
+    case DIRECTION_LEFT:
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = 0; i < SnakeSize; i++) {
+            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        }
+
+        // Set new head coordinates
+        SnakeCoord[1].x = SnakeCoord[1].x - 1;
+
+        // Set head and tail coordinates
+        SnakeHead = SnakeCoord[1];
+        SnakeTail = SnakeCoord[SnakeSize];
+
+        break;
+    case DIRECTION_RIGHT:
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = 0; i < SnakeSize; i++) {
+            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        }
+
+        // Set new head coordinates
+        SnakeCoord[1].x = SnakeCoord[1].x + 1;
+
+        // Set head and tail coordinates
+        SnakeHead = SnakeCoord[1];
+        SnakeTail = SnakeCoord[SnakeSize];
+
+        break;
+    }
+}
+
+void InputHandler() {
+    if (_kbhit()) {
+        char key = _getch();
+        if (isUpKey(key) && CanMoveUpDown()) MoveSnake(DIRECTION_UP);
+        if (isDownKey(key) && CanMoveUpDown()) MoveSnake(DIRECTION_DOWN);
+        if (isLeftKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_LEFT);
+        if (isRightKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_RIGHT);
+    }
 }

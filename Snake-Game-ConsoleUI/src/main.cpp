@@ -1,7 +1,13 @@
 #include "../include/Snake.h"
 
 int main() {
-	StartSnake();
+	bool quitGame = false;
+	
+	Init();
+	while (!quitGame) {
+		BoxRender();
+		InputHandler();
+	}
 	
 	//system("pause");
 }
