@@ -1,18 +1,6 @@
 ﻿#include "../include/Snake.h"
 
-// Define the size of the box in which
-// the snake lives
-#define BOX_SIZE_X 20
-#define BOX_SIZE_Y 20
-
-#define DIRECTION_UP    1
-#define DIRECTION_DOWN  2
-#define DIRECTION_LEFT  3
-#define DIRECTION_RIGHT 4
-
-#define SNAKE_PIXEL char(178)
-#define FOOD_PIXEL char(176)
-#define BLANK_PIXEL char(32)
+bool DebugMode = true;
 
 // Define input keys here
 const int	KEY_ESC = 27;
@@ -21,6 +9,7 @@ const int	KEY_DOWN[] = { 80, 115 };
 const int	KEY_LEFT[] = { 75, 97 };
 const int	KEY_RIGHT[] = { 77, 100 };
 const int	KEY_SELECT[] = { 13, 102 };
+const int   KEY_PAUSE = 32;
 
 // The array SnakeCoord saves the coordinates of every
 // parts of the snake
@@ -29,15 +18,23 @@ Coordinate SnakeCoord[BOX_SIZE_X * BOX_SIZE_Y];
 // Snake's head and tail and food coordinates
 Coordinate SnakeHead, SnakeTail, Food;
 
+// Stores the most recent snake's direction
+int SnakeDirection = DIRECTION_UP;
+
 // The box in which the snake lives
 int Box[BOX_SIZE_X][BOX_SIZE_Y];
+
+bool quitGame = false;
+bool pauseGame = false;
+bool GameOver = false;
+int Score = 0;
 
 // This variable keeps track of the snake's length
 // Default value is 1;
 int SnakeSize = 1;
 
 bool isUpKey(int x) {
-    auto ArraySize = size(KEY_UP);
+    auto ArraySize = std::size(KEY_UP);
 
     for (int i = 0; i < ArraySize; i++) {
         if (KEY_UP[i] == x) return true;
@@ -47,7 +44,7 @@ bool isUpKey(int x) {
 }
 
 bool isDownKey(int x) {
-    auto ArraySize = size(KEY_DOWN);
+    auto ArraySize = std::size(KEY_DOWN);
 
     for (int i = 0; i < ArraySize; i++) {
         if (KEY_DOWN[i] == x) return true;
@@ -57,7 +54,7 @@ bool isDownKey(int x) {
 }
 
 bool isLeftKey(int x) {
-    auto ArraySize = size(KEY_LEFT);
+    auto ArraySize = std::size(KEY_LEFT);
 
     for (int i = 0; i < ArraySize; i++) {
         if (KEY_LEFT[i] == x) return true;
@@ -67,7 +64,7 @@ bool isLeftKey(int x) {
 }
 
 bool isRightKey(int x) {
-    auto ArraySize = size(KEY_RIGHT);
+    auto ArraySize = std::size(KEY_RIGHT);
 
     for (int i = 0; i < ArraySize; i++) {
         if (KEY_RIGHT[i] == x) return true;
@@ -77,7 +74,7 @@ bool isRightKey(int x) {
 }
 
 bool isSelectKey(int x) {
-    auto ArraySize = size(KEY_SELECT);
+    auto ArraySize = std::size(KEY_SELECT);
 
     for (int i = 0; i < ArraySize; i++) {
         if (KEY_SELECT[i] == x) return true;
@@ -221,6 +218,12 @@ void Init() {
     SnakeHead.y = BOX_SIZE_Y / 2;
     SnakeTail = SnakeCoord[SnakeSize];
     SnakeHead = SnakeCoord[SnakeSize - 1];
+    SnakeDirection = DIRECTION_UP;
+
+    quitGame = false;
+    pauseGame = false;
+    GameOver = false;
+    Score = 0;
 
     // Hide console cursor
     NoCursorType();
@@ -231,6 +234,7 @@ void Init() {
     // Draw
     BorderRender();
     BoxRender();
+    PrintScore();
 
     GotoXY(0, 22);
 }
@@ -249,67 +253,152 @@ bool CanMoveLeftRight() {
     else return false;
 }
 
+// Check if a position is the same as food's position
+bool isFoodPosition(Coordinate x) {
+    if (Food.x == x.x && Food.y == x.y) return true;
+    else return false;
+}
+
+void PrintScore() {
+    GotoXY(23, 0);
+    std::cout << "Score: " << Score;
+    GotoXY(0, 23);
+}
+
+void PrintDebugInfo() {
+    GotoXY(35, 0);
+    std::cout << "\t" << "SnakeSize = " << SnakeSize;
+    GotoXY(0, 23);
+}
+
 // This function will move the snake in a direction
-void MoveSnake(char Direction) {
+// Consume food if it's in the way
+void MoveSnake(int Direction) {
+    Coordinate temp;
+    
     switch (Direction) {
     case DIRECTION_UP:
-        // Shift a the snake's pixel up
-        // (lower part's coordinates = upper part's coordinates)
-        for (int i = 0; i < SnakeSize; i++) {
-            SnakeCoord[i + 2] = SnakeCoord[i + 1];
-        }
+        temp = SnakeCoord[1];
+        temp.y = temp.y - 1;
         
-        // Set new head coordinates
-        SnakeCoord[1].y = SnakeCoord[1].y - 1;
+        if (!isFoodPosition(temp)) {
+            // Shift a the snake's pixel up
+            // (lower part's coordinates = upper part's coordinates)
+            for (int i = 0; i < SnakeSize; i++) {
+                SnakeCoord[i + 2] = SnakeCoord[i + 1];
+            }
+        }
+        else {
+            SnakeSize += 1;
+            for (int i = SnakeSize; i > 0; i--) {
+                SnakeCoord[i] = SnakeCoord[i - 1];
+            }
+            Food = SpawnFood();
+            Score += 5;
+            PrintScore();
+        }
 
+        // Set new head coordinates
         // Set head and tail coordinates
-        SnakeHead = SnakeCoord[1];
+        SnakeHead = temp;
         SnakeTail = SnakeCoord[SnakeSize];
+        SnakeCoord[1] = temp;
+
+        // Set snake's direction
+        SnakeDirection = DIRECTION_UP;
 
         break;
     case DIRECTION_DOWN:
-        // Shift a the snake's pixel up
-        // (lower part's coordinates = upper part's coordinates)
-        for (int i = 0; i < SnakeSize; i++) {
-            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        temp = SnakeCoord[1];
+        temp.y = temp.y + 1;
+
+        if (!isFoodPosition(temp)) {
+            // Shift a the snake's pixel up
+            // (lower part's coordinates = upper part's coordinates)
+            for (int i = 0; i < SnakeSize; i++) {
+                SnakeCoord[i + 2] = SnakeCoord[i + 1];
+            }
+        }
+        else {
+            SnakeSize += 1;
+            for (int i = SnakeSize; i > 0; i--) {
+                SnakeCoord[i] = SnakeCoord[i - 1];
+            }
+            Food = SpawnFood();
+            Score += 5;
+            PrintScore();
         }
 
         // Set new head coordinates
-        SnakeCoord[1].y = SnakeCoord[1].y + 1;
-
         // Set head and tail coordinates
-        SnakeHead = SnakeCoord[1];
+        SnakeHead = temp;
         SnakeTail = SnakeCoord[SnakeSize];
+        SnakeCoord[1] = temp;
+
+        // Set snake's direction
+        SnakeDirection = DIRECTION_DOWN;
 
         break;
     case DIRECTION_LEFT:
-        // Shift a the snake's pixel up
-        // (lower part's coordinates = upper part's coordinates)
-        for (int i = 0; i < SnakeSize; i++) {
-            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        temp = SnakeCoord[1];
+        temp.x = temp.x - 1;
+
+        if (!isFoodPosition(temp)) {
+            // Shift a the snake's pixel up
+            // (lower part's coordinates = upper part's coordinates)
+            for (int i = 0; i < SnakeSize; i++) {
+                SnakeCoord[i + 2] = SnakeCoord[i + 1];
+            }
+        }
+        else {
+            SnakeSize += 1;
+            for (int i = SnakeSize; i > 0; i--) {
+                SnakeCoord[i] = SnakeCoord[i - 1];
+            }
+            Food = SpawnFood();
+            Score += 5;
+            PrintScore();
         }
 
         // Set new head coordinates
-        SnakeCoord[1].x = SnakeCoord[1].x - 1;
-
         // Set head and tail coordinates
-        SnakeHead = SnakeCoord[1];
+        SnakeHead = temp;
         SnakeTail = SnakeCoord[SnakeSize];
+        SnakeCoord[1] = temp;
+
+        // Set snake's direction
+        SnakeDirection = DIRECTION_LEFT;
 
         break;
     case DIRECTION_RIGHT:
-        // Shift a the snake's pixel up
-        // (lower part's coordinates = upper part's coordinates)
-        for (int i = 0; i < SnakeSize; i++) {
-            SnakeCoord[i + 2] = SnakeCoord[i + 1];
+        temp = SnakeCoord[1];
+        temp.x = temp.x + 1;
+
+        if (!isFoodPosition(temp)) {
+            // Shift a the snake's pixel up
+            // (lower part's coordinates = upper part's coordinates)
+            for (int i = 0; i < SnakeSize; i++) {
+                SnakeCoord[i + 2] = SnakeCoord[i + 1];
+            }
+        }
+        else {
+            SnakeSize += 1;
+            for (int i = SnakeSize; i > 0; i--) {
+                SnakeCoord[i] = SnakeCoord[i - 1];
+            }
+            Food = SpawnFood();
+            Score += 5;
+            PrintScore();
         }
 
         // Set new head coordinates
-        SnakeCoord[1].x = SnakeCoord[1].x + 1;
-
         // Set head and tail coordinates
-        SnakeHead = SnakeCoord[1];
+        SnakeHead = temp;
         SnakeTail = SnakeCoord[SnakeSize];
+        SnakeCoord[1] = temp;
+
+        // Set snake's direction
+        SnakeDirection = DIRECTION_RIGHT;
 
         break;
     }
@@ -322,5 +411,9 @@ void InputHandler() {
         if (isDownKey(key) && CanMoveUpDown()) MoveSnake(DIRECTION_DOWN);
         if (isLeftKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_LEFT);
         if (isRightKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_RIGHT);
+        if (key == KEY_PAUSE)
+            if (pauseGame) pauseGame = false;
+            else pauseGame = true;
+        if (key == KEY_ESC) quitGame = true;
     }
 }

@@ -7,7 +7,23 @@
 #include <conio.h>
 #include <iterator>
 
-using namespace std;
+// Define the size of the box in which
+// the snake lives
+#define BOX_SIZE_X 20
+#define BOX_SIZE_Y 20
+
+#define DIRECTION_UP    1
+#define DIRECTION_DOWN  2
+#define DIRECTION_LEFT  3
+#define DIRECTION_RIGHT 4
+
+#define SNAKE_PIXEL char(178)
+#define FOOD_PIXEL char(176)
+#define BLANK_PIXEL char(32)
+
+// How long it takes for the snake to move without
+// user's inputsS
+#define SNAKE_DELAY 30
 
 //============================================================
 // "extern" keyword is used to avoid multiple definitions
@@ -21,6 +37,14 @@ extern const int	KEY_DOWN[];
 extern const int	KEY_LEFT[];
 extern const int	KEY_RIGHT[];
 extern const int	KEY_SELECT[];
+extern const int	KEY_PAUSE;
+
+extern int SnakeDirection;
+extern bool quitGame;
+extern bool pauseGame;
+extern bool GameOver;
+extern int Score;
+extern bool DebugMode;
 
 struct Coordinate {
 	int x, y;
@@ -48,5 +72,8 @@ Coordinate SpawnFood();
 void InputHandler();
 bool CanMoveUpDown();
 bool CanMoveLeftRight();
-void MoveSnake();
+void MoveSnake(int Direction);
 void BoxRender();
+bool isFoodPosition(Coordinate x);
+void PrintScore();
+void PrintDebugInfo();
