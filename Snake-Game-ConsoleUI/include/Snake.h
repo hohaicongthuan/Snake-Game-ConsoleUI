@@ -23,7 +23,7 @@
 
 // How long it takes for the snake to move without
 // user's inputsS
-#define SNAKE_DELAY 30
+#define SNAKE_DELAY 10
 
 //============================================================
 // "extern" keyword is used to avoid multiple definitions

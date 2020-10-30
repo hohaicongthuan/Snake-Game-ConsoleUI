@@ -1,6 +1,6 @@
 ﻿#include "../include/Snake.h"
 
-bool DebugMode = true;
+bool DebugMode = 0;
 
 // Define input keys here
 const int	KEY_ESC = 27;
@@ -132,13 +132,16 @@ Coordinate SpawnFood() {
     // Food cannot be spawned on occupied slot
     // of the snake
     do {
+        isValidCoord = true;
         temp.x = Random(19) + 1;
         temp.y = Random(19) + 1;
 
         // Check if the spawned position is occupied
-        for (int i = 0; i < SnakeSize; i++) {
-            if (SnakeCoord[i + 1].x == temp.x &&
-                SnakeCoord[i + 1].y == temp.y) {
+        for (int i = 1; i <= SnakeSize; i++) {
+            if (SnakeCoord[i].x == temp.x &&
+                SnakeCoord[i].y == temp.y ||
+                Food.x == temp.x &&
+                Food.y == temp.y) {
                 isValidCoord = false;
                 break;
             }
@@ -184,26 +187,23 @@ void BoxRender() {
     }
     
     // Set snake's position on the box
-    for (int i = 0; i < SnakeSize; i++) {
-        int CoordX = SnakeCoord[i + 1].x;
-        int CoordY = SnakeCoord[i + 1].y;
-        Box[CoordX][CoordY] = 1;
+    for (int i = 1; i <= SnakeSize; i++) {
+        Box[SnakeCoord[i].x][SnakeCoord[i].y] = 1;
     }
 
     // Set food's position on the box
     Box[Food.x][Food.y] = 0;
     
     // Print the matrix
-    GotoXY(1, 1);
     for (int y = 0; y < BOX_SIZE_Y; y++) {
+        GotoXY(1, y + 1);
         for (int x = 0; x < BOX_SIZE_X; x++) {
             if (Box[x][y] == 1) std::cout << SNAKE_PIXEL;
             else if (Box[x][y] == 0) std::cout << FOOD_PIXEL;
             else std::cout << BLANK_PIXEL;
         }
-        GotoXY(1, y + 1);
     }
-    GotoXY(0, 0);
+    GotoXY(0, 23);
 }
 
 void Init() {
@@ -211,13 +211,11 @@ void Init() {
     SnakeSize = 2;
     temp.x = BOX_SIZE_X / 2;
     temp.y = BOX_SIZE_Y / 2;
-    SnakeCoord[SnakeSize - 1] = temp;
+    SnakeCoord[1] = temp;
     temp.y = temp.y + 1;
-    SnakeCoord[SnakeSize] = temp;
-    SnakeHead.x = BOX_SIZE_X / 2;
-    SnakeHead.y = BOX_SIZE_Y / 2;
-    SnakeTail = SnakeCoord[SnakeSize];
-    SnakeHead = SnakeCoord[SnakeSize - 1];
+    SnakeCoord[2] = temp;
+    SnakeHead = SnakeCoord[1];
+    SnakeTail = SnakeCoord[2];
     SnakeDirection = DIRECTION_UP;
 
     quitGame = false;
@@ -267,7 +265,13 @@ void PrintScore() {
 
 void PrintDebugInfo() {
     GotoXY(35, 0);
-    std::cout << "\t" << "SnakeSize = " << SnakeSize;
+    std::cout << "\t" << "SnakeSize = " << SnakeSize << "\n";
+    for (int i = 0; i < SnakeSize; i++) {
+        GotoXY(35, i + 2);
+        std::cout << "\t" << "SnakeCoord[" << i + 1 << "]:" << "\t"
+            << "X = " << SnakeCoord[i + 1].x << " "
+            << "Y = " << SnakeCoord[i + 1].y << "          " << "\n";
+    }
     GotoXY(0, 23);
 }
 
@@ -281,21 +285,17 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.y = temp.y - 1;
         
-        if (!isFoodPosition(temp)) {
-            // Shift a the snake's pixel up
-            // (lower part's coordinates = upper part's coordinates)
-            for (int i = 0; i < SnakeSize; i++) {
-                SnakeCoord[i + 2] = SnakeCoord[i + 1];
-            }
-        }
-        else {
-            SnakeSize += 1;
-            for (int i = SnakeSize; i > 0; i--) {
-                SnakeCoord[i] = SnakeCoord[i - 1];
-            }
+        if (isFoodPosition(temp)) {
+            SnakeSize++;
             Food = SpawnFood();
             Score += 5;
             PrintScore();
+        }
+
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = SnakeSize; i > 1; i--) {
+            SnakeCoord[i] = SnakeCoord[i - 1];
         }
 
         // Set new head coordinates
@@ -312,21 +312,17 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.y = temp.y + 1;
 
-        if (!isFoodPosition(temp)) {
-            // Shift a the snake's pixel up
-            // (lower part's coordinates = upper part's coordinates)
-            for (int i = 0; i < SnakeSize; i++) {
-                SnakeCoord[i + 2] = SnakeCoord[i + 1];
-            }
-        }
-        else {
-            SnakeSize += 1;
-            for (int i = SnakeSize; i > 0; i--) {
-                SnakeCoord[i] = SnakeCoord[i - 1];
-            }
+        if (isFoodPosition(temp)) {
+            SnakeSize++;
             Food = SpawnFood();
             Score += 5;
             PrintScore();
+        }
+
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = SnakeSize; i > 1; i--) {
+            SnakeCoord[i] = SnakeCoord[i - 1];
         }
 
         // Set new head coordinates
@@ -343,21 +339,17 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.x = temp.x - 1;
 
-        if (!isFoodPosition(temp)) {
-            // Shift a the snake's pixel up
-            // (lower part's coordinates = upper part's coordinates)
-            for (int i = 0; i < SnakeSize; i++) {
-                SnakeCoord[i + 2] = SnakeCoord[i + 1];
-            }
-        }
-        else {
-            SnakeSize += 1;
-            for (int i = SnakeSize; i > 0; i--) {
-                SnakeCoord[i] = SnakeCoord[i - 1];
-            }
+        if (isFoodPosition(temp)) {
+            SnakeSize++;
             Food = SpawnFood();
             Score += 5;
             PrintScore();
+        }
+
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = SnakeSize; i > 1; i--) {
+            SnakeCoord[i] = SnakeCoord[i - 1];
         }
 
         // Set new head coordinates
@@ -374,21 +366,17 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.x = temp.x + 1;
 
-        if (!isFoodPosition(temp)) {
-            // Shift a the snake's pixel up
-            // (lower part's coordinates = upper part's coordinates)
-            for (int i = 0; i < SnakeSize; i++) {
-                SnakeCoord[i + 2] = SnakeCoord[i + 1];
-            }
-        }
-        else {
-            SnakeSize += 1;
-            for (int i = SnakeSize; i > 0; i--) {
-                SnakeCoord[i] = SnakeCoord[i - 1];
-            }
+        if (isFoodPosition(temp)) {
+            SnakeSize++;
             Food = SpawnFood();
             Score += 5;
             PrintScore();
+        }
+
+        // Shift a the snake's pixel up
+        // (lower part's coordinates = upper part's coordinates)
+        for (int i = SnakeSize; i > 1; i--) {
+            SnakeCoord[i] = SnakeCoord[i - 1];
         }
 
         // Set new head coordinates
