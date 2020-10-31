@@ -20,10 +20,13 @@
 #define SNAKE_PIXEL char(178)
 #define FOOD_PIXEL char(176)
 #define BLANK_PIXEL char(32)
+#define SNAKE 1
+#define FOOD 0
+#define BLANK -1
 
 // How long it takes for the snake to move without
-// user's inputsS
-#define SNAKE_DELAY 10
+// user's inputs
+#define SNAKE_DELAY 20
 
 //============================================================
 // "extern" keyword is used to avoid multiple definitions
@@ -75,5 +78,8 @@ bool CanMoveLeftRight();
 void MoveSnake(int Direction);
 void BoxRender();
 bool isFoodPosition(Coordinate x);
+bool isSnakeOrWall(Coordinate x);
 void PrintScore();
 void PrintDebugInfo();
+void PrintPaused(bool option);
+void PrintGameOver(bool option);

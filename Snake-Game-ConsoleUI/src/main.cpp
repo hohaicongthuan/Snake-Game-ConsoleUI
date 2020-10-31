@@ -5,17 +5,31 @@ int main() {
 	
 	Init();
 	while (!quitGame) {
-		InputHandler();
-		if (!pauseGame) {
-			Delay++;
+		if (!GameOver) {
+			// Reset delay if some key is hit
+			if (_kbhit()) Delay = 0;
 
-			BoxRender();
-			if (DebugMode) PrintDebugInfo();
-			if (Delay >= SNAKE_DELAY) {
-				MoveSnake(SnakeDirection);
+			InputHandler();
+
+			if (!pauseGame) {
+				Delay++;
+
 				BoxRender();
 				if (DebugMode) PrintDebugInfo();
-				Delay = 0;
+				if (Delay >= SNAKE_DELAY) {
+					MoveSnake(SnakeDirection);
+					BoxRender();
+					if (DebugMode) PrintDebugInfo();
+					Delay = 0;
+				}
+			}
+		}
+		else {
+			if (_kbhit()) {
+				system("cls");
+				Init();
+				PrintGameOver(0);
+				GameOver = false;
 			}
 		}
 	}

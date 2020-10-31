@@ -15,8 +15,8 @@ const int   KEY_PAUSE = 32;
 // parts of the snake
 Coordinate SnakeCoord[BOX_SIZE_X * BOX_SIZE_Y];
 
-// Snake's head and tail and food coordinates
-Coordinate SnakeHead, SnakeTail, Food;
+// Food coordinates
+Coordinate Food;
 
 // Stores the most recent snake's direction
 int SnakeDirection = DIRECTION_UP;
@@ -182,17 +182,17 @@ void BoxRender() {
     // Reset matrix
     for (int y = 0; y < BOX_SIZE_Y; y++) {
         for (int x = 0; x < BOX_SIZE_X; x++) {
-            Box[x][y] = -1;
+            Box[x][y] = BLANK;
         }
     }
     
-    // Set snake's position on the box
+    // Set snake's position in the box
     for (int i = 1; i <= SnakeSize; i++) {
-        Box[SnakeCoord[i].x][SnakeCoord[i].y] = 1;
+        Box[SnakeCoord[i].x][SnakeCoord[i].y] = SNAKE;
     }
 
     // Set food's position on the box
-    Box[Food.x][Food.y] = 0;
+    Box[Food.x][Food.y] = FOOD;
     
     // Print the matrix
     for (int y = 0; y < BOX_SIZE_Y; y++) {
@@ -214,8 +214,6 @@ void Init() {
     SnakeCoord[1] = temp;
     temp.y = temp.y + 1;
     SnakeCoord[2] = temp;
-    SnakeHead = SnakeCoord[1];
-    SnakeTail = SnakeCoord[2];
     SnakeDirection = DIRECTION_UP;
 
     quitGame = false;
@@ -239,15 +237,13 @@ void Init() {
 
 // Checks if the snake can move up/down
 bool CanMoveUpDown() {
-    Coordinate HeadMinusOne = SnakeCoord[2];
-    if (SnakeHead.y == HeadMinusOne.y) return true;
+    if (SnakeCoord[1].y == SnakeCoord[2].y) return true;
     else return false;
 }
 
 // Checks if the snake can move left/right
 bool CanMoveLeftRight() {
-    Coordinate HeadMinusOne = SnakeCoord[2];
-    if (SnakeHead.x == HeadMinusOne.x) return true;
+    if (SnakeCoord[1].x == SnakeCoord[2].x) return true;
     else return false;
 }
 
@@ -255,6 +251,23 @@ bool CanMoveLeftRight() {
 bool isFoodPosition(Coordinate x) {
     if (Food.x == x.x && Food.y == x.y) return true;
     else return false;
+}
+
+// This function will check whether a position is
+// one of the snake's or the wall
+bool isSnakeOrWall(Coordinate x) {
+    // Check if the position is out of the box
+    if (x.x > 19 || x.y > 19 || x.x < 0 || x.y < 0) return true;
+
+    // Check if the position is already one of
+    // the snake's aka the snake collides itself
+    for (int i = 1; i <= SnakeSize; i++) {
+        if (SnakeCoord[i].x == x.x &&
+            SnakeCoord[i].y == x.y) return true;
+    }
+
+    // None of these conditions are met
+    return false;
 }
 
 void PrintScore() {
@@ -275,6 +288,24 @@ void PrintDebugInfo() {
     GotoXY(0, 23);
 }
 
+// This function will print a message to notify
+// that the game is paused if option = 1
+// otherwise, it'll delete the message
+void PrintPaused(bool option) {
+    GotoXY(23, 3);
+    if (option) std::cout << "GAME PAUSED";
+    else std::cout << "           ";
+}
+
+// This function will print a message to notify
+// that the game is over if option = 1
+// otherwise, it'll delete the message
+void PrintGameOver(bool option) {
+    GotoXY(23, 5);
+    if (option) std::cout << "GAME OVER";
+    else std::cout << "         ";
+}
+
 // This function will move the snake in a direction
 // Consume food if it's in the way
 void MoveSnake(int Direction) {
@@ -285,6 +316,13 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.y = temp.y - 1;
         
+        // If the snake moves towards the wall or itself
+        // the game is over
+        if (isSnakeOrWall(temp)) {
+            GameOver = true;
+            PrintGameOver(1);
+        }
+
         if (isFoodPosition(temp)) {
             SnakeSize++;
             Food = SpawnFood();
@@ -299,9 +337,6 @@ void MoveSnake(int Direction) {
         }
 
         // Set new head coordinates
-        // Set head and tail coordinates
-        SnakeHead = temp;
-        SnakeTail = SnakeCoord[SnakeSize];
         SnakeCoord[1] = temp;
 
         // Set snake's direction
@@ -312,6 +347,13 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.y = temp.y + 1;
 
+        // If the snake moves towards the wall or itself
+        // the game is over
+        if (isSnakeOrWall(temp)) {
+            GameOver = true;
+            PrintGameOver(1);
+        }
+
         if (isFoodPosition(temp)) {
             SnakeSize++;
             Food = SpawnFood();
@@ -326,9 +368,6 @@ void MoveSnake(int Direction) {
         }
 
         // Set new head coordinates
-        // Set head and tail coordinates
-        SnakeHead = temp;
-        SnakeTail = SnakeCoord[SnakeSize];
         SnakeCoord[1] = temp;
 
         // Set snake's direction
@@ -339,6 +378,13 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.x = temp.x - 1;
 
+        // If the snake moves towards the wall or itself
+        // the game is over
+        if (isSnakeOrWall(temp)) {
+            GameOver = true;
+            PrintGameOver(1);
+        }
+
         if (isFoodPosition(temp)) {
             SnakeSize++;
             Food = SpawnFood();
@@ -353,9 +399,6 @@ void MoveSnake(int Direction) {
         }
 
         // Set new head coordinates
-        // Set head and tail coordinates
-        SnakeHead = temp;
-        SnakeTail = SnakeCoord[SnakeSize];
         SnakeCoord[1] = temp;
 
         // Set snake's direction
@@ -366,6 +409,13 @@ void MoveSnake(int Direction) {
         temp = SnakeCoord[1];
         temp.x = temp.x + 1;
 
+        // If the snake moves towards the wall or itself
+        // the game is over
+        if (isSnakeOrWall(temp)) {
+            GameOver = true;
+            PrintGameOver(1);
+        }
+
         if (isFoodPosition(temp)) {
             SnakeSize++;
             Food = SpawnFood();
@@ -380,9 +430,6 @@ void MoveSnake(int Direction) {
         }
 
         // Set new head coordinates
-        // Set head and tail coordinates
-        SnakeHead = temp;
-        SnakeTail = SnakeCoord[SnakeSize];
         SnakeCoord[1] = temp;
 
         // Set snake's direction
@@ -400,8 +447,14 @@ void InputHandler() {
         if (isLeftKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_LEFT);
         if (isRightKey(key) && CanMoveLeftRight()) MoveSnake(DIRECTION_RIGHT);
         if (key == KEY_PAUSE)
-            if (pauseGame) pauseGame = false;
-            else pauseGame = true;
+            if (pauseGame) {
+                pauseGame = false;
+                PrintPaused(0);
+            }
+            else {
+                pauseGame = true;
+                PrintPaused(1);
+            }
         if (key == KEY_ESC) quitGame = true;
     }
 }
