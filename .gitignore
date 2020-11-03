@@ -1,3 +1,7 @@
 .vs/**
 Debug/**
 Snake-Game-ConsoleUI/Debug/**
+Snake-Game-ConsoleUI/x64/Release/**
+x64/Release/*.iobj
+x64/Release/*.ipdb
+x64/Release/*.pdb
