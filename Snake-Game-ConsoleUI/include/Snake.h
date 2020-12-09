@@ -9,8 +9,8 @@
 
 // Define the size of the box in which
 // the snake lives
-#define BOX_SIZE_X 20
-#define BOX_SIZE_Y 20
+#define BOX_SIZE_X 40
+#define BOX_SIZE_Y 30
 
 #define DIRECTION_UP    1
 #define DIRECTION_DOWN  2
